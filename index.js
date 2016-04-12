@@ -8,7 +8,7 @@ var fs = Promise.promisifyAll(require('fs'));
 var path = require('path');
 var findit = require('findit');
 var duplex = require('duplexify')
-var from = require('from2');
+var from2 = require('from2');
 var xList = null;
 var shpFileFromArchive = null;
 var shapefileOpts = {};
@@ -36,28 +36,18 @@ var _parseOptions = function(opts) {
   }
 };
 
-module.exports = function(inStream, opts) {
-  var id = Math.floor(Math.random() * (1 << 30))
-    .toString(16);
-  var tmpDir = path.join('/tmp', id);
-  var zipFile = path.join('/tmp', id + '.zip');
-  _parseOptions(opts);
-  if (shpFileFromArchive)
-    shpFileFromArchive = tmpDir + '/' + shpFileFromArchive;
-
-  var outStream = duplex.obj();
-
+var _unzip = function(zipFile, tmpDir, inStream) {
   var zipStream = fs.createWriteStream(zipFile);
   inStream.pipe(zipStream);
-  zipStream.on('error', outStream.destroy);
 
-  Promise.all([
+  return Promise.all([
       fs.mkdirAsync(tmpDir, 0700),
       new Promise(function(resolve, reject) {
-        if (zipStream.closed)
-          resolve();
-        else
-          zipStream.on('close', resolve);
+
+        zipStream.on('error', reject);
+
+        if (zipStream.closed) resolve();
+        else zipStream.on('close', resolve);
       })
     ])
     .then(function() {
@@ -75,25 +65,44 @@ module.exports = function(inStream, opts) {
           code < 3 ? resolve() : reject('error in unzip: code ' + code)
         });
       });
-    })
-    .then(function() {
+    });
+}
 
-      var s = findit(tmpDir);
-      var files = [];
+var _filterShapeFiles = function(tmpDir){
+  var s = findit(tmpDir);
+  var files = [];
 
-      return new Promise(function(resolve, reject) {
-        s.on('file', function(file) {
-          if (file.match(/__MACOSX/)) return;
-          if (file.match(/\.shp$|\.kml$/i)) files.push(file);
-        });
+  return new Promise(function(resolve, reject) {
+    s.on('file', function(file) {
+      if (file.match(/__MACOSX/)) return;
+      if (file.match(/\.shp$|\.kml$/i)) files.push(file);
+    });
 
-        s.on('end', function() {
-          resolve(files)
-        });
-        s.on('error', reject)
-      })
-    })
+    s.on('end', function() {
+      resolve(files)
+    });
+    s.on('error', reject)
+  })
+}
+
+module.exports = function(inStream, opts) {
+  var id = Math.floor(Math.random() * (1 << 30))
+    .toString(16);
+  var tmpDir = path.join('/tmp', id);
+  var zipFile = path.join('/tmp', id + '.zip');
+
+  _parseOptions(opts);
+
+  if (shpFileFromArchive)
+    shpFileFromArchive = tmpDir + '/' + shpFileFromArchive;
+
+  var outStream = duplex.obj();
+
+  _unzip(zipFile, tmpDir, inStream)
+    .then(_filterShapeFiles.bind(null, tmpDir))
     .then(function(files) {
+      //TRANSFORM shp file to geoJson
+      //Note: this ugly mess needs to be broken down
       new Promise(function(resolve, reject) {
         if (!files || files.length === 0) {
           reject('no .shp files found in the archive');
@@ -107,18 +116,18 @@ module.exports = function(inStream, opts) {
             maybeArrayEnd = '',
             maybeComma = '',
             len = files.length,
-            after = '',
-            isFirstIteration = true,
-            i = 0;
+            filePath,
+            fileName,
+            isLast = false,
+            reader;
 
-          var filePath, isLast, reader, fileName, before, started, currentLayer,
-            currentFeature, currentTransformation, firstTime, out;
+          var isLast, before, started, firstTime, out, after = '', i = 0;
 
           function nextFile() {
+
             if (i >= len) return;
             filePath = files[i];
-            // console.log(i);
-            // console.log(filePath);
+
             isLast = i === len - 1;
             if (len > 1 && i === 0) {
               maybeArrayBegining = '[';
@@ -131,7 +140,7 @@ module.exports = function(inStream, opts) {
               maybeArrayEnd = ']';
               maybeComma = '';
             }
-            // console.log('reading next file: ' +  filePath);
+
             reader = shp.reader(filePath, shapefileOpts);
             fileName = filePath;
             for (var toRemove in ['.shp', tmpDir])
@@ -143,10 +152,12 @@ module.exports = function(inStream, opts) {
             firstTime = true;
 
             out = '';
+
           }
+
           nextFile();
 
-          var layerStream = from(function(size, next) {
+          var layerStream = from2(function(size, next) {
 
             writeNextFeature();
 
@@ -160,14 +171,12 @@ module.exports = function(inStream, opts) {
                     layerStream.push(after);
                     reader.close();
                     if (isLast) {
-                      // console.log('isLast');
                       return layerStream.push(null);
                     }
                     nextFile();
                     return writeNextFeature();
                   }
-                  // if (!feature) return writeNextFeature();
-                  // console.log(feature);
+
                   var featStr = JSON.stringify(feature);
 
                   if (started) {
@@ -204,6 +213,6 @@ module.exports = function(inStream, opts) {
     .catch(function(err) {
       outStream.destroy(err);
     });
-  // return;
+
   return outStream;
 };
