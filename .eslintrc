@@ -1,0 +1,16 @@
+{
+  "ecmaFeatures": {
+    "modules": true,
+    "restructuring": true,
+  },
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "rules": {
+    "quotes": [2, "single"],
+    "strict": 0,
+    "no-unused-vars": 2,
+    'no-undef':  2
+  }
+}
