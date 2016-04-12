@@ -31,16 +31,16 @@
   },
   "dependencies": {
     "duplexify": "^3.2.0",
-    "findit": "0.1.x",
-    "from2": "^1.2.0",
+    "findit": "2.0.x",
+    "from2": "^2.1.1",
     "morestreams": "0.1.x",
     "seq": "0.3.x",
     "shapefile": "^0.3.0",
-    "through2": "^0.6.2"
+    "through2": "^2.0.1"
   },
   "devDependencies": {
     "geojson-assert": "0.0.2",
-    "tape": "^3.0.0"
+    "tape": "^4.5.1"
   },
   "engines": {
     "node": ">=0.10.0"
