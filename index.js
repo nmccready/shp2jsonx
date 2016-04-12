@@ -62,7 +62,7 @@ var _unzip = function(zipFile, tmpDir, inStream) {
         }
 
         ps.on('exit', function(code) {
-          code < 3 ? resolve() : reject('error in unzip: code ' + code)
+          code < 3 ? resolve() : reject( new Error('error in unzip: code ' + code))
         });
       });
     });
@@ -105,9 +105,9 @@ module.exports = function(inStream, opts) {
       //Note: this ugly mess needs to be broken down
       new Promise(function(resolve, reject) {
         if (!files || files.length === 0) {
-          reject('no .shp files found in the archive');
+          reject( new Error('no .shp files found in the archive'));
         } else if (shpFileFromArchive && files.indexOf(shpFileFromArchive) === -1) {
-          reject('shpFileFromArchive: ' + shpFileFromArchive + 'does not exist in archive.');
+          reject( new Error('shpFileFromArchive: ' + shpFileFromArchive + 'does not exist in archive.'));
         } else {
           if (shpFileFromArchive)
             files = [shpFileFromArchive];
