@@ -3,6 +3,7 @@ var toJSON = require('../');
 var fs = require('fs');
 var Stream = require('stream').Stream;
 var assertgeojson = require('geojson-assert');
+var now = new Date();
 
 [
     {name:'shape', len: 162},
@@ -59,4 +60,10 @@ test('combined.zip to json', function (t) {
     };
 
     toJSON(inStream).pipe(outStream);
+});
+
+test("end", function(t){
+  console.log("total time: ");
+  console.log(new Date() - now);
+  t.end()
 });
