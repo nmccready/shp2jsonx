@@ -30,11 +30,11 @@
     "test": "node test/tojson.js"
   },
   "dependencies": {
+    "bluebird": "3.3.4",
     "duplexify": "^3.2.0",
     "findit": "2.0.x",
     "from2": "^2.1.1",
     "morestreams": "0.1.x",
-    "seq": "0.3.x",
     "shapefile": "^0.3.0",
     "through2": "^2.0.1"
   },
@@ -46,7 +46,7 @@
     "node": ">=0.10.0"
   },
   "license": "MIT",
-  "author":"RealtyMapster LLC",
+  "author": "RealtyMapster LLC",
   "original author": {
     "name": "James Halliday",
     "email": "mail@substack.net",
