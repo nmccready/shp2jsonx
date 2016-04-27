@@ -83,23 +83,23 @@ module.exports = function(inStream, opts) {
 
             var onFile = function(file) {
                 if (file.match(/__MACOSX/)) return;
-                if (file.match(/\.shp$|\.kml$/i)){
+                if (file.match(/\.shp$|\.kml$/i)) {
                     var index;
                     var canPush = true;
 
-                    for(index in negativeFileRegExes){
-                        if (file.match(negativeFileRegExes[index])){
+                    for (index in negativeFileRegExes) {
+                        if (file.match(negativeFileRegExes[index])) {
                             canPush = false;
                             break;
                         }
                     }
-                    if(canPush)
+                    if (canPush)
                         files.push(file);
                 }
             };
 
             s.on('file', onFile);
-            s.once('end', function(){
+            s.once('end', function() {
                 s.removeListener('file', onFile);
                 next.ok(files);
             });
@@ -120,27 +120,26 @@ module.exports = function(inStream, opts) {
                     after = '',
                     isFirstIteration = true,
                     i = 0,
-                    resultIsArray = alwaysReturnArray !== null? alwaysReturnArray : len > 1;
+                    resultIsArray = alwaysReturnArray !== null ? alwaysReturnArray : len > 1;
 
 
                 var filePath, isLast, reader, fileName, before, started, currentLayer,
                     currentFeature, currentTransformation, firstTime, out;
 
                 function nextFile() {
-                    if(i >= len) return;
+                    if (i >= len) return;
                     filePath = files[i];
                     // console.log(i);
                     // console.log(filePath);
                     isLast = i === len - 1;
                     if (resultIsArray && i === 0) {
                         maybeArrayBegining = '[';
-                        if(!isLast)
+                        if (!isLast)
                             maybeComma = ',';
-                    }
-                    else
+                    } else
                         maybeArrayBegining = '';
 
-                    if (isLast && resultIsArray){
+                    if (isLast && resultIsArray) {
                         maybeArrayEnd = ']';
                         maybeComma = '';
                     }
@@ -148,7 +147,7 @@ module.exports = function(inStream, opts) {
                     reader = shp.reader(filePath, shapefileOpts);
                     fileName = filePath;
                     for (var toRemove in ['.shp', tmpDir])
-                        fileName = filePath.replace(toRemove,'');
+                        fileName = filePath.replace(toRemove, '');
 
                     before = maybeArrayBegining + '{"type": "FeatureCollection","fileName": "' + fileName + '", "features": [\n';
                     after = '\n]}' + maybeComma + '\n' + maybeArrayEnd;
@@ -172,7 +171,7 @@ module.exports = function(inStream, opts) {
                                     layerStream.push(out);
                                     layerStream.push(after);
                                     reader.close();
-                                    if (isLast){
+                                    if (isLast) {
                                         // console.log('isLast');
                                         return layerStream.push(null);
                                     }
