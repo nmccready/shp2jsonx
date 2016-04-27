@@ -1,7 +1,7 @@
 {
   "name": "shp2jsonx",
   "description": "Convert shapefile zip archives into GeoJSON using a streaming interface",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "repository": {
     "type": "git",
     "url": "git://github.com/realtymaps/shp2jsonx.git"
@@ -27,7 +27,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "node test/tojson.js"
+    "test": "node test/index.test.js"
   },
   "dependencies": {
     "duplexify": "^3.2.0",

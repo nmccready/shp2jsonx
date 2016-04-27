@@ -7,10 +7,11 @@ var seq = require('seq');
 var findit = require('findit');
 var duplex = require('duplexify')
 var from = require('from2');
+var ourErrors = require('./errors')
 var xList = null;
 var shpFileFromArchive = null;
 var shapefileOpts = {};
-var negativeFileRegExes = [];
+var skipRegExes = [];
 var alwaysReturnArray = null;
 
 var _parseOptions = function(opts) {
@@ -33,8 +34,8 @@ var _parseOptions = function(opts) {
       if (typeof(opts.encoding) === 'string')
         shapefileOpts.encoding = opts.encoding;
     }
-    if (opts.negativeFileRegExes) {
-      negativeFileRegExes = opts.negativeFileRegExes;
+    if (opts.skipRegExes) {
+      skipRegExes = opts.skipRegExes;
     }
     if (opts.alwaysReturnArray !== null && typeof opts.alwaysReturnArray !== "undefined")
       alwaysReturnArray = opts.alwaysReturnArray;
@@ -74,7 +75,7 @@ module.exports = function(inStream, opts) {
       }
 
       ps.once('exit', function(code) {
-        next(code < 3 ? null : 'error in unzip: code ' + code)
+        next(code < 3 ? null : new ourErrors.UnzipError('error in unzip: code ' + code))
       });
     })
     .seq_(function(next) {
@@ -87,8 +88,8 @@ module.exports = function(inStream, opts) {
           var index;
           var canPush = true;
 
-          for (index in negativeFileRegExes) {
-            if (file.match(negativeFileRegExes[index])) {
+          for (index in skipRegExes) {
+            if (file.match(skipRegExes[index])) {
               canPush = false;
               break;
             }
@@ -106,9 +107,9 @@ module.exports = function(inStream, opts) {
     })
     .seq(function(files) {
       if (files.length === 0) {
-        this('no .shp files found in the archive');
+        this(new ourErrors.NoShapeFilesError('no .shp files found in the archive'));
       } else if (shpFileFromArchive && files.indexOf(shpFileFromArchive) === -1) {
-        this('shpFileFromArchive: ' + shpFileFromArchive + 'does not exist in archive.');
+        this(new ourErrors.NoSpecificShapeFileError('shpFileFromArchive: ' + shpFileFromArchive + 'does not exist in archive.'));
       } else {
         if (shpFileFromArchive)
           files = [shpFileFromArchive];
@@ -218,3 +219,5 @@ module.exports = function(inStream, opts) {
   // return;
   return outStream;
 };
+
+module.exports.errors = ourErrors;

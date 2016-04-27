@@ -1,0 +1,13 @@
+{
+  "ecmaFeatures": {
+    "modules": true
+  },
+  "env": {
+    "node": true
+  },
+  "rules": {
+    semi: [2, "always"],
+    "strict": 0,
+    "no-unused-vars": [2, { "vars": "all", "args": "none" }]
+  }
+}

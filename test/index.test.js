@@ -4,6 +4,7 @@ var fs = require('fs');
 var Stream = require('stream').Stream;
 var assertgeojson = require('geojson-assert');
 var now = new Date();
+var internalErrors = require('../errors');
 
 [
   { name: 'shape', len: 162 },
@@ -59,11 +60,11 @@ test('combined.zip to json', function(t) {
     t.end();
   };
 
-  toJSON(inStream).pipe(outStream)
+  toJSON(inStream).pipe(outStream);
 });
 
 
-test('negativeFileRegExes - combined.zip to json', function(t) {
+test('skipRegExes - combined.zip to json', function(t) {
   var inStream = fs.createReadStream(__dirname + '/../data/combined.zip');
   var outStream = new Stream;
   outStream.writable = true;
@@ -90,10 +91,10 @@ test('negativeFileRegExes - combined.zip to json', function(t) {
     t.end();
   };
 
-  toJSON(inStream, { negativeFileRegExes: [/counties/i] }).pipe(outStream)
+  toJSON(inStream, { skipRegExes: [/counties/i] }).pipe(outStream);
 });
 
-test('alwaysReturnArray && negativeFileRegExes - combined.zip to json', function(t) {
+test('alwaysReturnArray && skipRegExes - combined.zip to json', function(t) {
   var inStream = fs.createReadStream(__dirname + '/../data/combined.zip');
   var outStream = new Stream;
   outStream.writable = true;
@@ -121,13 +122,18 @@ test('alwaysReturnArray && negativeFileRegExes - combined.zip to json', function
 
   toJSON(inStream, {
     alwaysReturnArray: true,
-    negativeFileRegExes: [/counties/i]
-  }).pipe(outStream)
+    skipRegExes: [/counties/i]
+  }).pipe(outStream);
+});
+
+test("errors exist", function(t) {
+  t.equal(Object.keys(toJSON.errors).length, Object.keys(internalErrors).length);
+  t.end();
 });
 
 
 test("end", function(t) {
   console.log("total time: ");
   console.log(new Date() - now);
-  t.end()
+  t.end();
 });
