@@ -10,6 +10,7 @@ var from = require('from2');
 var xList = null;
 var shpFileFromArchive = null;
 var shapefileOpts = {};
+var negativeFileRegExes = [];
 
 var _parseOptions = function(opts) {
     if (opts && typeof(opts) === 'object') {
@@ -31,6 +32,9 @@ var _parseOptions = function(opts) {
             if (typeof(opts.encoding) === 'string')
                 shapefileOpts.encoding = opts.encoding;
         }
+        if (opts.negativeFileRegExes) {
+            negativeFileRegExes = opts.negativeFileRegExes;
+        }
     }
 };
 
@@ -46,7 +50,7 @@ module.exports = function(inStream, opts) {
 
     var zipStream = fs.createWriteStream(zipFile);
     inStream.pipe(zipStream);
-    zipStream.on('error', outStream.destroy);
+    zipStream.once('error', outStream.destroy);
 
     seq()
         .par(function() {
@@ -54,7 +58,7 @@ module.exports = function(inStream, opts) {
         })
         .par(function() {
             if (zipStream.closed) this();
-            else zipStream.on('close', this);
+            else zipStream.once('close', this);
         })
         .seq_(function(next) {
             // console.log(xList);
@@ -66,18 +70,36 @@ module.exports = function(inStream, opts) {
                 ps = exec(toRun);
             }
 
-            ps.on('exit', function(code) {
+            ps.once('exit', function(code) {
                 next(code < 3 ? null : 'error in unzip: code ' + code)
             });
         })
         .seq_(function(next) {
             var s = findit(tmpDir);
             var files = [];
-            s.on('file', function(file) {
+
+            var onFile = function(file) {
                 if (file.match(/__MACOSX/)) return;
-                if (file.match(/\.shp$|\.kml$/i)) files.push(file);
+                if (file.match(/\.shp$|\.kml$/i)){
+                    var index;
+                    var canPush = true;
+
+                    for(index in negativeFileRegExes){
+                        if (file.match(negativeFileRegExes[index])){
+                            canPush = false;
+                            break;
+                        }
+                    }
+                    if(canPush)
+                        files.push(file);
+                }
+            };
+
+            s.on('file', onFile);
+            s.once('end', function(){
+                s.removeListener('file', onFile);
+                next.ok(files);
             });
-            s.on('end', next.ok.bind(null, files));
         })
         .seq(function(files) {
             if (files.length === 0) {
