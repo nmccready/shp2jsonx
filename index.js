@@ -11,6 +11,7 @@ var xList = null;
 var shpFileFromArchive = null;
 var shapefileOpts = {};
 var negativeFileRegExes = [];
+var alwaysReturnArray = null;
 
 var _parseOptions = function(opts) {
     if (opts && typeof(opts) === 'object') {
@@ -35,6 +36,8 @@ var _parseOptions = function(opts) {
         if (opts.negativeFileRegExes) {
             negativeFileRegExes = opts.negativeFileRegExes;
         }
+        if (opts.alwaysReturnArray !== null && typeof opts.alwaysReturnArray !== "undefined")
+            alwaysReturnArray = opts.alwaysReturnArray;
     }
 };
 
@@ -116,7 +119,9 @@ module.exports = function(inStream, opts) {
                     len = files.length,
                     after = '',
                     isFirstIteration = true,
-                    i = 0;
+                    i = 0,
+                    resultIsArray = alwaysReturnArray !== null? alwaysReturnArray : len > 1;
+
 
                 var filePath, isLast, reader, fileName, before, started, currentLayer,
                     currentFeature, currentTransformation, firstTime, out;
@@ -127,7 +132,7 @@ module.exports = function(inStream, opts) {
                     // console.log(i);
                     // console.log(filePath);
                     isLast = i === len - 1;
-                    if (len > 1 && i === 0) {
+                    if (resultIsArray && i === 0) {
                         maybeArrayBegining = '[';
                         if(!isLast)
                             maybeComma = ',';
@@ -135,7 +140,7 @@ module.exports = function(inStream, opts) {
                     else
                         maybeArrayBegining = '';
 
-                    if (isLast && len > 1){
+                    if (isLast && resultIsArray){
                         maybeArrayEnd = ']';
                         maybeComma = '';
                     }
