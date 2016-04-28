@@ -5,9 +5,9 @@ var fs = require('fs');
 var path = require('path');
 var seq = require('seq');
 var findit = require('findit');
-var duplex = require('duplexify')
+var duplex = require('duplexify');
 var from = require('from2');
-var ourErrors = require('./errors')
+var ourErrors = require('./errors');
 var xList = null;
 var shpFileFromArchive = null;
 var shapefileOpts = {};
@@ -75,7 +75,7 @@ module.exports = function(inStream, opts) {
       }
 
       ps.once('exit', function(code) {
-        next(code < 3 ? null : new ourErrors.UnzipError('error in unzip: code ' + code))
+        next(code < 3 ? null : new ourErrors.UnzipError('error in unzip: code ' + code));
       });
     })
     .seq_(function(next) {
@@ -119,13 +119,11 @@ module.exports = function(inStream, opts) {
           maybeComma = '',
           len = files.length,
           after = '',
-          isFirstIteration = true,
           i = 0,
           resultIsArray = alwaysReturnArray !== null ? alwaysReturnArray : len > 1;
 
 
-        var filePath, isLast, reader, fileName, before, started, currentLayer,
-          currentFeature, currentTransformation, firstTime, out;
+        var filePath, isLast, reader, fileName, before, started, firstTime, out;
 
         function nextFile() {
           if (i >= len) return;
